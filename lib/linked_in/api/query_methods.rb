@@ -103,7 +103,27 @@ module LinkedIn
         if options.delete(:public)
           path +=":public"
         elsif fields
-          path +=":(#{fields.map{ |f| f.to_s.gsub("_","-") }.join(',')})"
+          ## example: http://api.linkedin.com/v1/people/~/network/updates:(update-content:(person:(id,headline)))?type=PRFU
+          ## old: path +=":(#{fields.map{ |f| f.to_s.gsub("_","-") }.join(',')})"
+          end_fields = []
+          prefixes = []
+          
+          fields.each do |field|
+            v = field.to_s.split(":")
+            end_fields << v[v.size-1]
+            prefixes = (v.size > 1 ? v[0..v.size-2] : [])
+          end
+          
+          path_end_fields = ":(#{end_fields.map{ |f| f.to_s.gsub("_","-") }.join(',')})"
+          
+          if prefixes.size > 0
+            path_prefix = ""
+            path_prefix_end = ""
+            prefixes.each { |item| path_prefix += ":(#{item.to_s.gsub("_","-")}"; path_prefix_end += ")" }      
+            path +=  path_prefix + path_end_fields + path_prefix_end 
+          else
+            path += path_end_fields
+          end
         end
 
         headers = options.delete(:headers) || {}
